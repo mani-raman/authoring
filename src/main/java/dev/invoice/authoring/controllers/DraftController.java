@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/invoice/authoring/v1")
+@RequestMapping("/invoice/authoring/v1/drafts")
 public class DraftController {
     private final AuthoringRepository authoringRepository;
 
@@ -16,13 +16,13 @@ public class DraftController {
         this.authoringRepository = authoringRepository;
     }
 
-    @PostMapping(path = "create")
+    @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Draft create(@RequestBody final Draft request){
         return authoringRepository.createDraft(request);
     }
 
-    @GetMapping("/pending")
+    @GetMapping
     public List<Draft> findPendingByAuthor(@RequestParam(name = "filter.author") String author){
         return authoringRepository.findPendingDraftsByAuthor(author);
     }
