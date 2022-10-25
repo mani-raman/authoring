@@ -9,15 +9,16 @@ import java.util.UUID;
 
 @Repository
 public class AuthoringRepository {
-    List<Draft> drafts = new ArrayList<>();
-    List<Invoice> invoices = new ArrayList<>();
-    List<Feedback> feedbacks = new ArrayList<>();
-    List<Approval> approvals = new ArrayList<>();
+    private final int _invoiceLimit = 1000;
+    List<Draft> _drafts = new ArrayList<>();
+    List<Invoice> _invoices = new ArrayList<>();
+    List<Feedback> _feedbacks = new ArrayList<>();
+    List<Approval> _approvals = new ArrayList<>();
 
     public void DraftRepository(){
 
-        invoices.add(getExistingInvoice());
-        invoices.add(getOverOneThousandInvoice());
+        _invoices.add(getExistingInvoice());
+        _invoices.add(getOverOneThousandInvoice());
     }
 
     public Draft createDraft(Draft input){
@@ -42,80 +43,63 @@ public class AuthoringRepository {
         else {
             draft = new Draft(UUID.randomUUID().toString(), input.author(), input.invoice());
         }
-        drafts.add(draft);
+        _drafts.add(draft);
 
         return draft;
     }
 
-    public Feedback createFeedback(String actor, Draft draft){
-        var feedback = new Feedback(actor, draft);
-
-        feedbacks.add(feedback);
-
-        return feedback;
-    }
-
-    public Object createApproval(String actor, Draft draft){
-
-        List<Feedback> feedbacks = findAnyFeedbacksForDraft(draft);
-
-        if (feedbacks.stream().count() == 0){
-
-        }
-
-        var approval = new Approval(actor, draft);
-
-        approvals.add(approval);
-
-        return approval;
-    }
-
-    public List<Draft> findDraftById(String id){
-        return drafts.stream().filter(stream -> stream.id().equals(id)).toList();
-    }
-
     public List<Draft> findPendingDraftsByAuthor(String author){
-        var draftsByAuthor = findDraftByAuthor(author);
+        var draftsByAuthor = _drafts.stream().filter(stream -> stream.author().equals(author)).toList();
         List<Draft> pendingDrafts = new ArrayList<>();
 
         for (Draft draft : draftsByAuthor){
-            if (findAnyFeedbacksForDraft(draft).stream().count() > 0) continue;
-            if (findAnyApprovalsForDraft(draft).stream().count() > 0) continue;
-
-            pendingDrafts.add(draft);
+            if (feedbacksForDraft(draft) == 0 && approvalsForDraft(draft) == 0) //no feedbacks or approvals.
+                pendingDrafts.add(draft);
         }
 
         return pendingDrafts;
     }
 
-    private boolean isInvoiceOverLimit(Invoice invoice, Long limit){
-        float total = 0;
-        for (Item item : invoice.items()) {
-            total += (item.cost() * item.quantity());
+    public Object requestApproval(String actor, Draft draft){
+        if (approvalsForDraft(draft) > 0) return null; //already approved.
+
+        if (draft.invoice().isOverLimit(_invoiceLimit)){
+            if (findAnyFeedbacksByActorForDraft(actor, draft, _feedbacks).stream().count() == 0)
+                return addApproval(actor, draft);
+            else
+                return addFeedback(actor, draft);
         }
-
-        for (Surcharge surcharge : invoice.surcharges()){
-            total += (surcharge.cost() * surcharge.quantity());
+        else{
+            return addApproval(actor, draft);
         }
-
-        return total > limit;
     }
 
-    private List<Draft> findDraftByAuthor(String author){
-        return drafts.stream().filter(stream -> stream.author().equals(author)).toList();
+    private long feedbacksForDraft(Draft draft){
+        return _feedbacks.stream().filter(f -> f.draft().id().equals(draft.id())).count();
+    }
+    private long approvalsForDraft(Draft draft){
+        return _approvals.stream().filter(a -> a.draft().id().equals(draft.id())).count();
+    }
+    private List<Feedback> findAnyFeedbacksByActorForDraft(String actor, Draft draft, List<Feedback> feedbacks){
+        return feedbacks.stream().filter(f -> f.actor().equals(actor) && f.draft().id().equals(draft.id())).toList();
+    }
+    private Feedback addFeedback(String actor, Draft draft){
+        var feedback = new Feedback(actor, draft);
+
+        _feedbacks.add(feedback);
+
+        return feedback;
+    }
+    private Approval addApproval(String actor,Draft draft){
+        var approval = new Approval(actor, draft);
+
+        _approvals.add(approval);
+
+        return approval;
     }
 
-    private List<Feedback> findAnyFeedbacksForDraft(Draft draft){
-        return feedbacks.stream().filter(f -> f.draft().id().equals(draft.id())).toList();
-    }
 
-    private List<Approval> findAnyApprovalsForDraft(Draft draft){
-        return approvals.stream().filter(a -> a.draft().id().equals(draft.id())).toList();
-    }
 
-    private Invoice findInvoiceById(String id){
-        return invoices.stream().filter(stream -> stream.id().equals(id)).findFirst().orElse(null);
-    }
     private Invoice getExistingInvoice(){
         List<Item> items = new ArrayList<>();
         items.add(new Item("Acme Giant Rubber Band", 1, (float) 19.99));
@@ -130,7 +114,6 @@ public class AuthoringRepository {
 
         return invoice;
     }
-
     private Invoice getOverOneThousandInvoice(){
         List<Item> items = new ArrayList<>();
         items.add(new Item("Acme Giant Rubber Band", 2, (float) 19.99));

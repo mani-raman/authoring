@@ -1,8 +1,6 @@
 package dev.invoice.authoring.controllers;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.invoice.authoring.models.Approval;
-import dev.invoice.authoring.models.Draft;
 import dev.invoice.authoring.repositories.AuthoringRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -20,7 +18,6 @@ public class ApprovalController {
     @PostMapping()
     @ResponseStatus(HttpStatus.CREATED)
     public Object create(@RequestBody final Approval request){
-
-        var approval = authoringRepository.createApproval(request.actor(), request.draft());
+        return authoringRepository.requestApproval(request.actor(), request.draft());
     }
 }
