@@ -11,34 +11,25 @@ import java.util.UUID;
 public class AuthoringRepository {
     private final int _invoiceLimit = 1000;
     List<Draft> _drafts = new ArrayList<>();
-    List<Invoice> _invoices = new ArrayList<>();
     List<Feedback> _feedbacks = new ArrayList<>();
     List<Approval> _approvals = new ArrayList<>();
-
-    public void DraftRepository(){
-
-        _invoices.add(getExistingInvoice());
-        _invoices.add(getOverOneThousandInvoice());
-    }
 
     public Draft createDraft(Draft input){
         Draft draft;
 
         if (input.invoice().id() == null)
         {
-            draft = new Draft(
-                    UUID.randomUUID().toString(),
-                    input.author(),
-                    new Invoice(
-                            UUID.randomUUID().toString(),
-                            input.invoice().title(),
-                            input.invoice().description(),
-                            input.invoice().payee(),
-                            input.invoice().payer(),
-                            input.invoice().items(),
-                            input.invoice().surcharges())
+            var invoice = input.invoice();
+            draft = new Draft(UUID.randomUUID().toString(), input.author(),
+                                new Invoice(
+                                        UUID.randomUUID().toString(),
+                                        invoice.title(),
+                                        invoice.description(),
+                                        invoice.payee(),
+                                        invoice.payer(),
+                                        invoice.items(),
+                                        invoice.surcharges())
             );
-
         }
         else {
             draft = new Draft(UUID.randomUUID().toString(), input.author(), input.invoice());
@@ -47,7 +38,9 @@ public class AuthoringRepository {
 
         return draft;
     }
-
+    public Draft findDraftById(String id){
+        return _drafts.stream().filter(d -> d.id().equals(id)).findFirst().orElse(null);
+    }
     public List<Draft> findPendingDraftsByAuthor(String author){
         var draftsByAuthor = _drafts.stream().filter(stream -> stream.author().equals(author)).toList();
         List<Draft> pendingDrafts = new ArrayList<>();
@@ -59,7 +52,6 @@ public class AuthoringRepository {
 
         return pendingDrafts;
     }
-
     public Object requestApproval(String actor, Draft draft){
 
         if (approvalsForDraft(draft) > 0) return null; //already an approval
@@ -72,7 +64,6 @@ public class AuthoringRepository {
 
         return addApproval(actor, draft); // all conditions satisfied, so approve draft over limit.
     }
-
     private long feedbacksForDraft(Draft draft){
         return _feedbacks.stream().filter(f -> f.draft().id().equals(draft.id())).count();
     }
@@ -95,42 +86,5 @@ public class AuthoringRepository {
         _approvals.add(approval);
 
         return approval;
-    }
-
-
-
-    private Invoice getExistingInvoice(){
-        List<Item> items = new ArrayList<>();
-        items.add(new Item("Acme Giant Rubber Band", 1, (float) 19.99));
-        Invoice invoice = new Invoice(
-                "497f6eca-6276-4993-bfeb-53cbbbba6f08",
-                "PO ACME CORP WEC 91949",
-                "August Invoice for delivered goods",
-                "228f4de6-59c3-413c-b038-4a81f809e468",
-                "b5c75cf0-4c0e-486c-b014-7b1599397646",
-                items,
-                new ArrayList<>());
-
-        return invoice;
-    }
-    private Invoice getOverOneThousandInvoice(){
-        List<Item> items = new ArrayList<>();
-        items.add(new Item("Acme Giant Rubber Band", 2, (float) 19.99));
-        items.add(new Item("Acme Explosive Tennis Balls", 48, (float) 10.00));
-
-        List<Surcharge> surcharges = new ArrayList<>();
-        surcharges.add(new Surcharge("Priority Delivery Fee", 50, (float) 10.00));
-        surcharges.add(new Surcharge("Dangerous Material Fee", 48, (float) 5.00));
-
-        Invoice invoice = new Invoice(
-                "497f6eca-6276-4993-bfeb-53cbbbba6f08",
-                "PO ACME CORP WEC 91949",
-                "August Invoice for delivered goods",
-                "228f4de6-59c3-413c-b038-4a81f809e468",
-                "b5c75cf0-4c0e-486c-b014-7b1599397646",
-                items,
-                surcharges);
-
-        return invoice;
     }
 }

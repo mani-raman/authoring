@@ -2,17 +2,12 @@ package dev.invoice.authoring;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import dev.invoice.authoring.controllers.ApprovalController;
-import dev.invoice.authoring.controllers.DraftController;
-import dev.invoice.authoring.models.Approval;
-import dev.invoice.authoring.models.Draft;
-import dev.invoice.authoring.models.Feedback;
-import dev.invoice.authoring.models.Invoice;
+import dev.invoice.authoring.controllers.*;
+import dev.invoice.authoring.models.*;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.util.Assert;
 
 import java.util.UUID;
 
@@ -23,8 +18,6 @@ class AuthoringApplicationTests {
     DraftController _draftController;
     @Autowired
     ApprovalController _approvalController;
-
-
 
     @Test
     void create_draft_for_existing_invoice() {
@@ -106,7 +99,6 @@ class AuthoringApplicationTests {
         pendingDrafts = _draftController.findPendingByAuthor(author);
         Assertions.assertEquals(0, pendingDrafts.stream().count()); //invoice now approved.
     }
-
 
 
     private Invoice getDangerousInvoiceFromString() {
