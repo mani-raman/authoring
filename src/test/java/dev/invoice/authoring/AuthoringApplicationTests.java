@@ -6,6 +6,7 @@ import dev.invoice.authoring.controllers.ApprovalController;
 import dev.invoice.authoring.controllers.DraftController;
 import dev.invoice.authoring.models.Approval;
 import dev.invoice.authoring.models.Draft;
+import dev.invoice.authoring.models.Feedback;
 import dev.invoice.authoring.models.Invoice;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -76,8 +77,11 @@ class AuthoringApplicationTests {
     @Test
     void approve_draft_over_limit(){
         String author = UUID.randomUUID().toString();
-        Invoice newInvoice = getNewInvoiceFromString();
-        Draft draft = new Draft(UUID.randomUUID().toString(), author, newInvoice);
+        Invoice dangerousInvoice = getDangerousInvoiceFromString();
+
+        Assertions.assertFalse(dangerousInvoice.satisfiesApprovalLimit(1000));
+
+        Draft draft = new Draft(UUID.randomUUID().toString(), author, dangerousInvoice);
 
         var newDraft = _draftController.create(draft);
         var pendingDrafts = _draftController.findPendingByAuthor(author);
@@ -85,13 +89,22 @@ class AuthoringApplicationTests {
         Assertions.assertEquals(1, pendingDrafts.stream().count());
 
         String actor = UUID.randomUUID().toString();
-        Approval response = (Approval) _approvalController.create(new Approval(actor, newDraft));
+        Object response = _approvalController.create(new Approval(actor, newDraft));
 
-        Assertions.assertFalse(response == null); //ensure there is an approval for normal draft.
-        Assertions.assertEquals(response.actor(), actor);
+        Assertions.assertTrue(response instanceof Feedback); //Expected to be a feedback.
+        Assertions.assertFalse(response instanceof Approval); //Not Expected to be an approval.
+
+        var differentActor = UUID.randomUUID().toString();
+        response = _approvalController.create(new Approval(differentActor, newDraft)); // create approval with a different Actor
+
+        Assertions.assertTrue(response instanceof Approval); //Expected to be a feedback.
+        Assertions.assertFalse(response instanceof Feedback); //Not Expected to be an approval.
+
+        Approval approval = (Approval) response;
+        Assertions.assertEquals(approval.actor(), differentActor);
 
         pendingDrafts = _draftController.findPendingByAuthor(author);
-        Assertions.assertEquals(0, pendingDrafts.stream().count());
+        Assertions.assertEquals(0, pendingDrafts.stream().count()); //invoice now approved.
     }
 
 
@@ -126,7 +139,7 @@ class AuthoringApplicationTests {
         "name": "Dangerous Material Fee",
         "quantity": 48,
         "cost": 5
-      },
+      }
     ]
   }
                             """;

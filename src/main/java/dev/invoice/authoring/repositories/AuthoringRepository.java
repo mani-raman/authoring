@@ -61,17 +61,16 @@ public class AuthoringRepository {
     }
 
     public Object requestApproval(String actor, Draft draft){
-        if (approvalsForDraft(draft) > 0) return null; //already approved.
 
-        if (draft.invoice().isOverLimit(_invoiceLimit)){
-            if (findAnyFeedbacksByActorForDraft(actor, draft, _feedbacks).stream().count() == 0)
-                return addApproval(actor, draft);
-            else
-                return addFeedback(actor, draft);
-        }
-        else{
-            return addApproval(actor, draft);
-        }
+        if (approvalsForDraft(draft) > 0) return null; //already an approval
+
+        if (draft.invoice().satisfiesApprovalLimit(_invoiceLimit)) return addApproval(actor, draft); //limit satisfies
+
+        if (feedbacksForDraft(draft) == 0) return addFeedback(actor, draft); //no feedback over limit so needs 2 actors.
+
+        if (feedbacksByADifferentActor(actor, draft) == 0) return addFeedback(actor, draft); //over limit so needs 2 different actors.
+
+        return addApproval(actor, draft); // all conditions satisfied, so approve draft over limit.
     }
 
     private long feedbacksForDraft(Draft draft){
@@ -80,8 +79,8 @@ public class AuthoringRepository {
     private long approvalsForDraft(Draft draft){
         return _approvals.stream().filter(a -> a.draft().id().equals(draft.id())).count();
     }
-    private List<Feedback> findAnyFeedbacksByActorForDraft(String actor, Draft draft, List<Feedback> feedbacks){
-        return feedbacks.stream().filter(f -> f.actor().equals(actor) && f.draft().id().equals(draft.id())).toList();
+    private long feedbacksByADifferentActor(String actor, Draft draft){
+        return _feedbacks.stream().filter(f -> f.draft().id().equals(draft.id()) && !f.actor().equals(actor)).count();
     }
     private Feedback addFeedback(String actor, Draft draft){
         var feedback = new Feedback(actor, draft);
