@@ -32,6 +32,20 @@ class AuthoringApplicationTests {
         Assertions.assertEquals(1, pendingDrafts.stream().count());
     }
 
+    @Test
+    void create_draft_for_new_invoice(){
+        String author = UUID.randomUUID().toString();
+        Invoice newInvoice = getNewInvoiceFromString();
+        Draft draft = new Draft(UUID.randomUUID().toString(), author, newInvoice);
+
+        var newDraft = _draftController.create(draft);
+        var pendingDrafts = _draftController.findPendingByAuthor(author);
+
+        Assertions.assertEquals(newInvoice.id(), null);
+        Assertions.assertFalse(newDraft.invoice().id() == null);
+        Assertions.assertEquals(1, pendingDrafts.stream().count());
+    }
+
     private Invoice getExistingInvoiceFromString() {
         String input = """
     {
@@ -49,6 +63,35 @@ class AuthoringApplicationTests {
         ],
         "surcharges": []
     }
+                            """;
+
+        ObjectMapper mapper = new ObjectMapper();
+        Invoice invoice;
+        try {
+            invoice = mapper.readValue(input, Invoice.class);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+
+        return invoice;
+    }
+
+    private Invoice getNewInvoiceFromString() {
+        String input = """
+  {
+    "title": "PO ACME CORP WEC 91949",
+    "description": "August Invoice for delivered goods",
+    "payee": "228f4de6-59c3-413c-b038-4a81f809e468",
+    "payer": "b5c75cf0-4c0e-486c-b014-7b1599397646",
+    "items": [
+      {
+        "name": "Acme Explosive Tennis Balls",
+        "quantity": 24,
+        "cost": 10
+      }
+    ],
+    "surcharges": []
+  }
                             """;
 
         ObjectMapper mapper = new ObjectMapper();
