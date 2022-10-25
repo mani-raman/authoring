@@ -55,7 +55,14 @@ public class AuthoringRepository {
         return feedback;
     }
 
-    public Approval createApproval(String actor, Draft draft){
+    public Object createApproval(String actor, Draft draft){
+
+        List<Feedback> feedbacks = findAnyFeedbacksForDraft(draft);
+
+        if (feedbacks.stream().count() == 0){
+
+        }
+
         var approval = new Approval(actor, draft);
 
         approvals.add(approval);
@@ -81,6 +88,18 @@ public class AuthoringRepository {
         return pendingDrafts;
     }
 
+    private boolean isInvoiceOverLimit(Invoice invoice, Long limit){
+        float total = 0;
+        for (Item item : invoice.items()) {
+            total += (item.cost() * item.quantity());
+        }
+
+        for (Surcharge surcharge : invoice.surcharges()){
+            total += (surcharge.cost() * surcharge.quantity());
+        }
+
+        return total > limit;
+    }
 
     private List<Draft> findDraftByAuthor(String author){
         return drafts.stream().filter(stream -> stream.author().equals(author)).toList();
@@ -93,7 +112,6 @@ public class AuthoringRepository {
     private List<Approval> findAnyApprovalsForDraft(Draft draft){
         return approvals.stream().filter(a -> a.draft().id().equals(draft.id())).toList();
     }
-
 
     private Invoice findInvoiceById(String id){
         return invoices.stream().filter(stream -> stream.id().equals(id)).findFirst().orElse(null);
