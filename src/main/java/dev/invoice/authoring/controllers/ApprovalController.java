@@ -1,6 +1,8 @@
 package dev.invoice.authoring.controllers;
 
+import dev.invoice.authoring.models.ApplicationResponse;
 import dev.invoice.authoring.models.Approval;
+import dev.invoice.authoring.models.Feedback;
 import dev.invoice.authoring.models.NotFoundException;
 import dev.invoice.authoring.repositories.AuthoringRepository;
 import org.springframework.http.HttpStatus;
@@ -18,13 +20,20 @@ public class ApprovalController {
 
     @PostMapping()
     @ResponseStatus(HttpStatus.CREATED)
-    public Object create(@RequestBody final Approval request){
+    public ApplicationResponse create(@RequestBody final Approval request){
         var draft = authoringRepository.findDraftById(request.draft().id());
 
         var response = authoringRepository.requestApproval(request.actor(), draft);
 
         if (response == null) throw new NotFoundException();
 
-         return response;
+        if (response instanceof Approval){
+            return new ApplicationResponse(response, "This is an approval!", null, null);
+        }
+
+        if (response instanceof Feedback)
+            return new ApplicationResponse(response, "This is an feedback!", null, null);
+
+        return new ApplicationResponse(response, null, null, null);
     }
 }
