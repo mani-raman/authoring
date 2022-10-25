@@ -22,7 +22,7 @@ public class DraftController {
         return authoringRepository.createDraft(request);
     }
 
-    @GetMapping
+    @GetMapping("/pending")
     public List<Draft> findPendingByAuthor(@RequestParam(name = "filter.author") String author){
         return authoringRepository.findPendingDraftsByAuthor(author);
     }

@@ -21,10 +21,9 @@ public class AuthoringRepository {
     }
 
     public Draft createDraft(Draft input){
-        Invoice existingInvoice = findInvoiceById(input.invoice().id());
         Draft draft;
 
-        if (existingInvoice == null)
+        if (input.invoice().id() == null)
         {
             draft = new Draft(
                     UUID.randomUUID().toString(),
