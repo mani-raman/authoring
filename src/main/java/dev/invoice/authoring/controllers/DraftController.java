@@ -6,6 +6,8 @@ import dev.invoice.authoring.repositories.AuthoringRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/invoice/authoring/v1/drafts")
 public class DraftController {
@@ -21,13 +23,13 @@ public class DraftController {
 
         var draft = authoringRepository.createDraft(request);
 
-        return new ApplicationResponse(draft, null, null, null);
+        return new ApplicationResponse<Draft>(draft);
     }
 
     @GetMapping("/pending")
     public ApplicationResponse findPendingByAuthor(@RequestParam(name = "filter.author") String author){
         var drafts = authoringRepository.findPendingDraftsByAuthor(author);
 
-        return new ApplicationResponse(drafts, null, null, null);
+        return new ApplicationResponse<List<Draft>>(drafts);
     }
 }

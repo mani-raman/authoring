@@ -28,12 +28,12 @@ public class ApprovalController {
         if (response == null) throw new NotFoundException();
 
         if (response instanceof Approval){
-            return new ApplicationResponse(response, "This is an approval!", null, null);
+            return new ApplicationResponse<Approval>(response, "This is an approval.");
         }
 
         if (response instanceof Feedback)
-            return new ApplicationResponse(response, "This is an feedback!", null, null);
+            return new ApplicationResponse<Feedback>(response, "This is an feedback!");
 
-        return new ApplicationResponse(response, null, null, null);
+        return new ApplicationResponse(response);
     }
 }
