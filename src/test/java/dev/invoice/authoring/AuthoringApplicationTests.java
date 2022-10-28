@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.invoice.authoring.controllers.*;
 import dev.invoice.authoring.models.*;
+import dev.invoice.authoring.services.ILoggingService;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +21,9 @@ class AuthoringApplicationTests {
     @Autowired
     ApprovalController _approvalController;
 
+    @Autowired
+    ILoggingService _loggingService;
+
     @Test
     void create_draft_for_existing_invoice() {
         String author = UUID.randomUUID().toString();
@@ -30,7 +34,9 @@ class AuthoringApplicationTests {
         var pendingDrafts = (List<Draft>)_draftController.findPendingByAuthor(author).Response;
 
         Assertions.assertEquals(existingInvoice.id(), newDraft.invoice().id());
+        _loggingService.Write("Invoice Id : " + newDraft.invoice().id());
         Assertions.assertEquals(1, (long) pendingDrafts.size());
+        _loggingService.Write("Pending draft size : " + pendingDrafts.size());
     }
 
     @Test
@@ -45,6 +51,7 @@ class AuthoringApplicationTests {
         Assertions.assertNull(newInvoice.id());
         Assertions.assertNotNull(newDraft.invoice().id());
         Assertions.assertEquals(1, (long) pendingDrafts.size());
+        _loggingService.Write("Pending draft size : " + pendingDrafts.size());
     }
 
     @Test
@@ -57,6 +64,7 @@ class AuthoringApplicationTests {
         var pendingDrafts = (List<Draft>)_draftController.findPendingByAuthor(author).Response;
 
         Assertions.assertEquals(1, (long) pendingDrafts.size());
+        _loggingService.Write("Pending draft size before approval : " + pendingDrafts.size());
 
         String actor = UUID.randomUUID().toString();
         Approval response = (Approval) _approvalController.create(new Approval(actor, newDraft)).Response;
@@ -66,6 +74,7 @@ class AuthoringApplicationTests {
 
         pendingDrafts = (List<Draft>) _draftController.findPendingByAuthor(author).Response;
         Assertions.assertEquals(0, (long) pendingDrafts.size());
+        _loggingService.Write("Pending draft size after approval : " + pendingDrafts.size());
     }
 
     @Test
@@ -79,6 +88,7 @@ class AuthoringApplicationTests {
 
         var newDraft = (Draft) _draftController.create(draft).Response;
         var pendingDrafts = (List<Draft>) _draftController.findPendingByAuthor(author).Response;
+        _loggingService.Write("Pending draft size before approval : " + pendingDrafts.size());
 
         Assertions.assertEquals(1, (long) pendingDrafts.size());
 
@@ -87,6 +97,7 @@ class AuthoringApplicationTests {
 
         pendingDrafts = (List<Draft>) _draftController.findPendingByAuthor(author).Response; //Still pending after one approval.
         Assertions.assertEquals(1, (long) pendingDrafts.size());
+        _loggingService.Write("Pending draft size after first approval : " + pendingDrafts.size());
 
         var differentActor = UUID.randomUUID().toString();
         response = _approvalController.create(new Approval(differentActor, newDraft)).Response; // create approval with a different Actor
@@ -96,6 +107,7 @@ class AuthoringApplicationTests {
 
         pendingDrafts = (List<Draft>) _draftController.findPendingByAuthor(author).Response;
         Assertions.assertEquals(0, (long) pendingDrafts.size()); //invoice now approved.
+        _loggingService.Write("Pending draft size after second approval: " + pendingDrafts.size());
     }
 
 
