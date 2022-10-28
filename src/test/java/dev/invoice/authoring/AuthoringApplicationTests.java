@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.invoice.authoring.controllers.*;
 import dev.invoice.authoring.models.*;
-import dev.invoice.authoring.services.ILoggingService;
+import dev.invoice.authoring.services.LoggingService;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,7 +21,7 @@ class AuthoringApplicationTests {
     ApprovalController _approvalController;
 
     @Autowired
-    ILoggingService _loggingService;
+    LoggingService _loggingService;
 
     @Test
     void create_draft_for_existing_invoice() {
@@ -49,6 +49,7 @@ class AuthoringApplicationTests {
 
         Assertions.assertNull(newInvoice.id());
         Assertions.assertNotNull(newDraft.invoice().id());
+        _loggingService.Write("Invoice Id : " + newDraft.invoice().id());
         Assertions.assertEquals(1, (long) pendingDrafts.size());
         _loggingService.Write("Pending draft size : " + pendingDrafts.size());
     }
