@@ -18,22 +18,10 @@ public class AuthoringRepository {
         Draft draft;
 
         if (input.invoice().id() == null)
-        {
-            var invoice = input.invoice();
-            draft = new Draft(UUID.randomUUID().toString(), input.author(),
-                                new Invoice(
-                                        UUID.randomUUID().toString(),
-                                        invoice.title(),
-                                        invoice.description(),
-                                        invoice.payee(),
-                                        invoice.payer(),
-                                        invoice.items(),
-                                        invoice.surcharges())
-            );
-        }
-        else {
+            draft = new Draft(UUID.randomUUID().toString(), input.author(), input.invoice().createNew());
+        else
             draft = new Draft(UUID.randomUUID().toString(), input.author(), input.invoice());
-        }
+
         _drafts.add(draft);
 
         return draft;
@@ -52,7 +40,11 @@ public class AuthoringRepository {
 
         return pendingDrafts;
     }
-    public Object requestApproval(String actor, Draft draft){
+    public Object requestApproval(String actor, String draftId){
+
+        var draft = findDraftById(draftId);
+
+        if (draft == null) throw new NotFoundException();
 
         if (approvalsForDraft(draft) > 0) return null; //already an approval
 
@@ -64,6 +56,7 @@ public class AuthoringRepository {
 
         return addApproval(actor, draft); // all conditions satisfied, so approve draft over limit.
     }
+
     private long feedbacksForDraft(Draft draft){
         return _feedbacks.stream().filter(f -> f.draft().id().equals(draft.id())).count();
     }

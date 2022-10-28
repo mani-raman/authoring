@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/invoice/authoring/v1/drafts")
+@RequestMapping("/invoice/authoring/v1")
 public class DraftController {
     private final AuthoringRepository authoringRepository;
 
@@ -17,7 +17,7 @@ public class DraftController {
         this.authoringRepository = authoringRepository;
     }
 
-    @PostMapping
+    @PostMapping(path = "/drafts")
     @ResponseStatus(HttpStatus.CREATED)
     public ApplicationResponse create(@RequestBody final Draft request){
 
