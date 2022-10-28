@@ -85,12 +85,11 @@ class AuthoringApplicationTests {
         String actor = UUID.randomUUID().toString();
         var response = _approvalController.create(new Approval(actor, newDraft)).Response;
 
-        Assertions.assertTrue(response instanceof Feedback); //Expected to be a feedback.
+        pendingDrafts = (List<Draft>) _draftController.findPendingByAuthor(author).Response; //Still pending after one approval.
+        Assertions.assertEquals(1, (long) pendingDrafts.size());
 
         var differentActor = UUID.randomUUID().toString();
         response = _approvalController.create(new Approval(differentActor, newDraft)).Response; // create approval with a different Actor
-
-        Assertions.assertTrue(response instanceof Approval); //Expected to be an approval.
 
         Approval approval = (Approval) response;
         Assertions.assertEquals(approval.actor(), differentActor);
