@@ -18,7 +18,7 @@ public class ApprovalController {
 
     @PostMapping(path = "/approvals")
     @ResponseStatus(HttpStatus.CREATED)
-    public ApplicationResponse create(@RequestBody final Approval request){
+    public ApplicationResponse<Approval> create(@RequestBody final Approval request){
         return _approvalService.create(request);
     }
 }

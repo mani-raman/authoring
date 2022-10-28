@@ -10,7 +10,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import java.util.List;
 import java.util.UUID;
 
 @SpringBootTest
@@ -30,8 +29,8 @@ class AuthoringApplicationTests {
         Invoice existingInvoice = getExistingInvoiceFromString();
         Draft draft = new Draft(UUID.randomUUID().toString(), author, existingInvoice);
 
-        var newDraft = (Draft) _draftController.create(draft).Response;
-        var pendingDrafts = (List<Draft>)_draftController.findPendingByAuthor(author).Response;
+        var newDraft = _draftController.create(draft).Response;
+        var pendingDrafts = _draftController.findPendingByAuthor(author).Response;
 
         Assertions.assertEquals(existingInvoice.id(), newDraft.invoice().id());
         _loggingService.Write("Invoice Id : " + newDraft.invoice().id());
@@ -45,8 +44,8 @@ class AuthoringApplicationTests {
         Invoice newInvoice = getNewInvoiceFromString();
         Draft draft = new Draft(UUID.randomUUID().toString(), author, newInvoice);
 
-        var newDraft = (Draft) _draftController.create(draft).Response;
-        var pendingDrafts = (List<Draft>) _draftController.findPendingByAuthor(author).Response;
+        var newDraft = _draftController.create(draft).Response;
+        var pendingDrafts = _draftController.findPendingByAuthor(author).Response;
 
         Assertions.assertNull(newInvoice.id());
         Assertions.assertNotNull(newDraft.invoice().id());
@@ -60,19 +59,19 @@ class AuthoringApplicationTests {
         Invoice newInvoice = getNewInvoiceFromString();
         Draft draft = new Draft(UUID.randomUUID().toString(), author, newInvoice);
 
-        var newDraft = (Draft)_draftController.create(draft).Response;
-        var pendingDrafts = (List<Draft>)_draftController.findPendingByAuthor(author).Response;
+        var newDraft = _draftController.create(draft).Response;
+        var pendingDrafts = _draftController.findPendingByAuthor(author).Response;
 
         Assertions.assertEquals(1, (long) pendingDrafts.size());
         _loggingService.Write("Pending draft size before approval : " + pendingDrafts.size());
 
         String actor = UUID.randomUUID().toString();
-        Approval response = (Approval) _approvalController.create(new Approval(actor, newDraft)).Response;
+        Approval response = _approvalController.create(new Approval(actor, newDraft)).Response;
 
         Assertions.assertNotNull(response); //ensure there is an approval for normal draft.
         Assertions.assertEquals(response.actor(), actor);
 
-        pendingDrafts = (List<Draft>) _draftController.findPendingByAuthor(author).Response;
+        pendingDrafts = _draftController.findPendingByAuthor(author).Response;
         Assertions.assertEquals(0, (long) pendingDrafts.size());
         _loggingService.Write("Pending draft size after approval : " + pendingDrafts.size());
     }
@@ -86,8 +85,8 @@ class AuthoringApplicationTests {
 
         Draft draft = new Draft(UUID.randomUUID().toString(), author, dangerousInvoice);
 
-        var newDraft = (Draft) _draftController.create(draft).Response;
-        var pendingDrafts = (List<Draft>) _draftController.findPendingByAuthor(author).Response;
+        var newDraft =  _draftController.create(draft).Response;
+        var pendingDrafts =  _draftController.findPendingByAuthor(author).Response;
         _loggingService.Write("Pending draft size before approval : " + pendingDrafts.size());
 
         Assertions.assertEquals(1, (long) pendingDrafts.size());
@@ -95,17 +94,16 @@ class AuthoringApplicationTests {
         String actor = UUID.randomUUID().toString();
         var response = _approvalController.create(new Approval(actor, newDraft)).Response;
 
-        pendingDrafts = (List<Draft>) _draftController.findPendingByAuthor(author).Response; //Still pending after one approval.
+        pendingDrafts = _draftController.findPendingByAuthor(author).Response; //Still pending after one approval.
         Assertions.assertEquals(1, (long) pendingDrafts.size());
         _loggingService.Write("Pending draft size after first approval : " + pendingDrafts.size());
 
         var differentActor = UUID.randomUUID().toString();
         response = _approvalController.create(new Approval(differentActor, newDraft)).Response; // create approval with a different Actor
 
-        Approval approval = (Approval) response;
-        Assertions.assertEquals(approval.actor(), differentActor);
+        Assertions.assertEquals(response.actor(), differentActor);
 
-        pendingDrafts = (List<Draft>) _draftController.findPendingByAuthor(author).Response;
+        pendingDrafts = _draftController.findPendingByAuthor(author).Response;
         Assertions.assertEquals(0, (long) pendingDrafts.size()); //invoice now approved.
         _loggingService.Write("Pending draft size after second approval: " + pendingDrafts.size());
     }
